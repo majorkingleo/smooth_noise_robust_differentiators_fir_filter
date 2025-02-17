@@ -65,7 +65,7 @@ constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
       for( int k = h; k > 0; --k ) {
 
         if( std::numeric_limits<T>::max() - D.at(k-1) < D.at(k) ) {
-          throw std::overflow_error("too much");
+          throw std::overflow_error("Overflow error. Coefficient not possible with this datatype.");
         }
 
         D.at(k) += D.at(k-1);
@@ -75,7 +75,7 @@ constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
       for( int k = 1; k < h; ++k ) {
 
         if( std::numeric_limits<T>::max() - D.at(k+1) < D.at(k) ) {
-          throw std::overflow_error("too much");
+          throw std::overflow_error("Overflow error. Coefficient not possible with this datatype.");
         }
 
         D.at(k) += D.at(k+1);
