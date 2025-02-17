@@ -1,15 +1,14 @@
-#include <iostream>
-#include <vector>
-#include <cstdint>
+#pragma once
+
 #include <array>
-#include <stdexcept>
 #include <limits>
+#include <stdexcept>
 
 /*
 	http://www.holoborodko.com/pavel/numerical-methods/numerical-derivative/smooth-low-noise-differentiators/
     https://oeis.org/A039598
 	https://oeis.org/A039598/b039598.txt
-  
+
     D = [0]*(n+2); D[1] = 1
     b = True; h = 1
     for i in range(2*n) :
@@ -52,7 +51,6 @@
 377 1
  */
 
-
 template<typename T, unsigned n>
 constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
 {
@@ -62,14 +60,14 @@ constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
   int h = 1;
   D.at(1) = 1;
 
-  for( int i = 0; i < 2 * int(n); ++i ) {    
+  for( int i = 0; i < 2 * int(n); ++i ) {
     if( b ) {
       for( int k = h; k > 0; --k ) {
-        
+
         if( std::numeric_limits<T>::max() - D.at(k-1) < D.at(k) ) {
           throw std::overflow_error("too much");
         }
-        
+
         D.at(k) += D.at(k-1);
       }
       h += 1;
@@ -79,7 +77,7 @@ constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
         if( std::numeric_limits<T>::max() - D.at(k+1) < D.at(k) ) {
           throw std::overflow_error("too much");
         }
-        
+
         D.at(k) += D.at(k+1);
       }
     }
@@ -94,65 +92,4 @@ constexpr std::array<T,n> calc_last_line_of_catalan_triangle()
   }
 
   return ret;
-}
-
-int main( int argc, char **argv )
-{
-	std::cout << "test\n";
-
-	try {
-	  auto x =  calc_last_line_of_catalan_triangle<uint64_t,27>();
-
-	  for( auto x : calc_last_line_of_catalan_triangle<uint64_t,27>() ) {
-		std::cout << x << ", ";
-	  }
-
-	  std::cout << "\n";
-
-	  int n = 5;
-
-	  if( argc > 1 ) {
-		n = std::atoi( argv[1] );
-	  }
-
-	  std::vector<unsigned long> D(n+2,0);
-
-	  bool b = true;
-	  int h = 1;
-	  D.at(1) = 1;
-
-	  for( int i = 0; i < 2 * n; ++i ) {
-
-		if( b ) {
-		  for( int k = h; k > 0; --k ) {
-			D.at(k) += D.at(k-1);
-		  }
-		  h += 1;
-		} else {
-		  for( int k = 1; k < h; ++k ) {
-			D.at(k) += D.at(k+1);
-		  }
-		}
-
-		b = !b;
-
-		if( b ) {
-		  std::cout << "[";
-		  for( int z = 1; z < h; z++ ) {
-			std::cout << D.at(z);
-		if( z + 1 < h ) {
-		  std::cout << ", ";
-		}
-		  }
-		  std::cout << "]\n";
-		}
-	  } // for
-
-	} catch( const std::exception & error ) {
-		std::cerr << "Error: " << error.what() << std::endl;
-	} catch( ... ) {
-		std::cerr << "unknown error\n";
-	}
-  
-  return 0;
 }
