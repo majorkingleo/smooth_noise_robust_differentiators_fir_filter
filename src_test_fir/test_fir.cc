@@ -6,8 +6,10 @@
 #include <file_option.h>
 #include <stderr_exception.h>
 #include <fstream>
+#include "SNRDFir.hpp"
 
 using namespace Tools;
+using namespace exmath;
 
 template<class T>
 static void dump_array( const T & co )
@@ -24,110 +26,6 @@ static void dump_array( const T & co )
 	std::cout << "]\n";
 }
 
-template <typename T, typename C, unsigned N>
-class Filter
-{
-protected:
-	std::array<T, N> input_buffer{};   // Input buffer
-	std::array<C, N> coefficients{};
-
-    C       sum = 0;
-    int     index = 0;
-    C       default_devide = 0;
-    bool    start_shifting = false;
-
-public:
-	constexpr Filter()
-	{
-		init_coefficients();
-	}
-
-	constexpr T get_result() const {
-		// if( sum < 0 ) {
-		//	CPPDEBUG( format( "sum: %d / %d", sum, default_devide ));
-		//}
-
-		return sum / default_devide;
-	}
-
-	constexpr T operator()(T input)
-	{
-		// Convert input to float for processing
-		input_buffer[index] = input;
-
-		C output = 0;
-		/*
-		for (int i = 0; i < N; i++) {
-			output += coefficients[i] * input_buffer[(index + i) % N];
-		}*/
-
-		for (int i = 0, j = N-1; i < N/2; i++, --j ) {
-			//CPPDEBUG( format( "i: %d j: %d", i, j ) );
-			output += coefficients[i] * input_buffer[(index + i) % N];
-			output += coefficients[j] * input_buffer[(index + j) % N];
-		}
-
-
-		sum = output;
-		index = (index + 1) % N;
-
-		return sum;
-	}
-
-	const std::array<C, N> & get_coefficients() const {
-		return coefficients;
-	}
-
-	C get_default_devide() const {
-		return default_devide;
-	}
-
-	void set_default_devide( C dd ) {
-		default_devide = dd;
-	}
-
-private:
-	constexpr void init_coefficients()
-	{
-		constexpr auto catalans_triangle = calc_last_line_of_catalan_triangle<T,N/2>();
-
-		// fill reverse and negative
-		unsigned i = 0;
-		for( auto it = catalans_triangle.rbegin(); it < catalans_triangle.rend(); ++it, ++i ) {
-			coefficients[i] = *it * -1;
-		}
-
-		// the middle one is unused
-		coefficients[i] = 0;
-		++i;
-
-		for( auto it = catalans_triangle.begin(); it < catalans_triangle.end(); ++it, ++i ) {
-			coefficients[i] = *it;
-		}
-
-		// calculate as constexpr to get an overflow error, if calculation is not possible
-		constexpr C devider = 8 * ipow<C>(4,N/2-2);
-		default_devide = devider;
-	}
-
-public:
-	template <typename X>
-	static constexpr X ipow(X num, unsigned int pow)
-	{
-		if( pow == 0 ) {
-			return 1;
-		}
-
-		X mul = ipow( num, pow-1 );
-
-		if( std::numeric_limits<X>::max() / mul < num ) {
-			throw std::overflow_error("Overflow error. Multiplication not possible with this datatype.");
-		}
-
-
-		return num * mul;
-	}
-};
 
 template<class T>
 static void dump_coefficients( const T & filter )
@@ -221,8 +119,15 @@ int main( int argc, char **argv )
 				throw STDERR_EXCEPTION( Tools::format( "cannot open file %s", o_file.getValues()->at(0) ) );
 			}
 
-			Filter<int64_t,int64_t,27*2+1> filter;
-			filter.set_default_devide(filter.get_default_devide()/ 256);
+			Filter::SNRDFir::Filter<int64_t,int64_t,27*2+1> filter;
+			filter.set_default_denominator(filter.get_default_denominator()/ 256);
+
+			constexpr auto c = filter.check_will_it_overflow( 4096 );
+			/*
+			if( filter.check_will_overflow(1) ) {
+				throw std::out_of_range( "value to large" );
+			}*/
+
 			//dump_coefficients(filter);
 
 			while( !in.eof() ) {
@@ -250,8 +155,8 @@ int main( int argc, char **argv )
 				throw STDERR_EXCEPTION( Tools::format( "cannot open file %s", o_file.getValues()->at(0) ) );
 			}
 
-			Filter<float,float,63*2+1> filter;
-			filter.set_default_devide(filter.get_default_devide()/ 256.0);
+			Filter::SNRDFir::Filter<float,float,63*2+1> filter;
+			filter.set_default_denominator(filter.get_default_denominator()/ 256.0);
 			//dump_coefficients(filter);
 
 			while( !in.eof() ) {
@@ -273,8 +178,8 @@ int main( int argc, char **argv )
 				throw STDERR_EXCEPTION( Tools::format( "cannot open file %s", o_file.getValues()->at(0) ) );
 			}
 
-			Filter<double,double,397*2+1> filter;
-			filter.set_default_devide(filter.get_default_devide()/ 256.0);
+			Filter::SNRDFir::Filter<double,double,397*2+1> filter;
+			filter.set_default_denominator(filter.get_default_denominator()/ 256.0);
 			//dump_coefficients(filter);
 
 			while( !in.eof() ) {

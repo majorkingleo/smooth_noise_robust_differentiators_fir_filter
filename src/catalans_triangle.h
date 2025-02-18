@@ -9,6 +9,7 @@
     https://oeis.org/A039598
 	https://oeis.org/A039598/b039598.txt
 
+	(Sage)
     D = [0]*(n+2); D[1] = 1
     b = True; h = 1
     for i in range(2*n) :
