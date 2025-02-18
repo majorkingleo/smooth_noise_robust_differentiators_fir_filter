@@ -76,19 +76,25 @@ int main( int argc, char **argv )
 		arg.addOptionR( &o_debug );
 
 		Arg::FlagOption o_fir1("fir1");
-		o_fir1.setDescription("Ulfs suggested FIR filter");
+		o_fir1.setDescription("Ulfs suggested FIR filter integer with 55 cooeficients");
 		o_fir1.setRequired(false);
 		arg.addOptionR( &o_fir1 );
 
 		Arg::FlagOption o_fir2("fir2");
-		o_fir2.setDescription("FIR filter with float 67 cofficients");
+		o_fir2.setDescription("FIR filter with float 127 cofficients");
 		o_fir2.setRequired(false);
 		arg.addOptionR( &o_fir2 );
 
 		Arg::FlagOption o_fir3("fir3");
-		o_fir3.setDescription("FIR filter with double 67 cofficients");
+		o_fir3.setDescription("FIR filter with double 795 cofficients");
 		o_fir3.setRequired(false);
 		arg.addOptionR( &o_fir3 );
+
+		Arg::FlagOption o_fir4("fir4");
+		o_fir4.setDescription("FIR filter with float and 55 cofficients and 16 bit ADC values.");
+		o_fir4.setRequired(false);
+		arg.addOptionR( &o_fir4 );
+
 
 		Arg::EmptyFileOption o_file;
 		o_file.setDescription("input file");
@@ -122,7 +128,7 @@ int main( int argc, char **argv )
 			Filter::SNRDFir::Filter<int64_t,int64_t,27*2+1> filter;
 			filter.set_default_denominator(filter.get_default_denominator()/ 256);
 
-			constexpr auto c = filter.check_will_it_overflow( 4096 );
+			//constexpr auto c = filter.check_will_it_overflow( 1 );
 			/*
 			if( filter.check_will_overflow(1) ) {
 				throw std::out_of_range( "value to large" );
@@ -181,6 +187,30 @@ int main( int argc, char **argv )
 			Filter::SNRDFir::Filter<double,double,397*2+1> filter;
 			filter.set_default_denominator(filter.get_default_denominator()/ 256.0);
 			//dump_coefficients(filter);
+
+			while( !in.eof() ) {
+
+				float f_in = 0;
+				in >> f_in;
+
+				filter(f_in);
+
+				std::cout << filter.get_result() << std::endl;
+			}
+
+		}
+		else if( o_fir4.getState() ) {
+
+			std::ifstream in( o_file.getValues()->at(0) );
+
+			if( !in ) {
+				throw STDERR_EXCEPTION( Tools::format( "cannot open file %s", o_file.getValues()->at(0) ) );
+			}
+
+			Filter::SNRDFir::Filter<float,float,27*2+1> filter;
+			filter.set_default_denominator(filter.get_default_denominator()/ 256.0);
+			constexpr auto c = filter.check_will_it_overflow( 0xFFFF );
+
 
 			while( !in.eof() ) {
 
