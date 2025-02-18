@@ -154,13 +154,15 @@ public:
 
 			C val = co * max_input_value;
 
-			if( val > 0 ) {
+			if( val >= 0 ) {
 				if( ( std::numeric_limits<C>::max() - val ) < val ) {
+					//CPPDEBUG( Tools::format( "%d - %d = %d < %d", std::numeric_limits<C>::max(), val, std::numeric_limits<C>::max() - val, val) );
 					throw std::overflow_error("Overflow error. Maximum input value too large for this datatype.");
 				}
 			} else {
-				if( ( std::numeric_limits<C>::min() - val ) > val ) {
+				if( ( std::numeric_limits<C>::lowest() - val ) > val ) {
 					throw std::overflow_error("Overflow error. Multiplication not possible with this datatype.");
+					//CPPDEBUG( Tools::format( "%d - %d = %d > %d", std::numeric_limits<C>::lowest(), val, std::numeric_limits<C>::lowest() - val, val) );
 				}
 			}
 
